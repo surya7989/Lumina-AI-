@@ -38,16 +38,37 @@ app.use('/db', dbRoutes);
 app.use('/api/document', documentRoutes);
 app.use('/document', documentRoutes);
 
-// Serve frontend static files (only when dist exists — e.g. Docker deployment)
+// Serve frontend static files (dynamic: handle case where dist may not exist at startup)
 const frontendPath = path.join(__dirname, '..', 'client', 'dist');
 const fs = require('fs');
-if (fs.existsSync(frontendPath)) {
-  app.use(express.static(frontendPath));
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) return;
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-}
+
+// Middleware to serve static files when available. If not available yet, return a friendly 503 for root
+app.use((req, res, next) => {
+  // allow API routes to pass through
+  if (req.path.startsWith('/api') || req.path.startsWith('/chat') || req.path.startsWith('/video') || req.path.startsWith('/db') || req.path.startsWith('/document')) return next();
+
+  if (fs.existsSync(frontendPath)) {
+    // serve static files from dist
+    return express.static(frontendPath)(req, res, next);
+  }
+
+  // If frontend not ready, show a small placeholder for root/index to avoid blank page
+  if (req.path === '/' || req.path === '/index.html') {
+    return res.status(503).send(`<!doctype html><html><head><meta charset="utf-8"><title>Deploying...</title></head><body style="font-family:Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#f7fafc;margin:0;"><div style="text-align:center;color:#333"><h2>Site is deploying</h2><p>The frontend build is not yet available. Please wait a moment and refresh the page.</p></div></body></html>`);
+  }
+
+  // For other asset requests, continue to next handlers (will 404 or be handled by other middleware)
+  return next();
+});
+
+// Fallback for client-side routing: when dist exists, always serve index.html for non-API routes
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/chat') || req.path.startsWith('/video') || req.path.startsWith('/db') || req.path.startsWith('/document')) return next();
+  if (fs.existsSync(frontendPath)) {
+    return res.sendFile(path.join(frontendPath, 'index.html'));
+  }
+  return res.status(503).send('Frontend not ready');
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
