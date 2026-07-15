@@ -1,4 +1,4 @@
-const https = require('https');
+﻿const https = require('https');
 const { supabaseRequest } = require('../utils/supabase');
 const { resolveSuperadminProfile } = require('../utils/profile');
 
@@ -85,7 +85,7 @@ const createChat = async (req, res) => {
 function callGroqAPI(messages) {
   return new Promise((resolve, reject) => {
     const groqMessages = [
-      { role: 'system', content: 'You are an intelligent educational assistant for an AI Learning Platform. Use normal spaces and valid Markdown. For a simple learning request such as 'explain HTML', return exactly this easy-to-read structure: first, one concise explanatory paragraph of 3-5 sentences; then a blank line; then the bold label **Important Points:**; then 5-8 short numbered points. Put every numbered point on its own new line. Do not use underlined headings made with === or ---, do not add many sections, and do not include code unless the user explicitly asks for code. For greetings, reply in 1-2 friendly sentences. Keep all answers accurate, simple, and concise.' },
+      { role: 'system', content: `You are an intelligent educational assistant for an AI Learning Platform. Use normal spaces and valid Markdown. For a simple learning request such as "explain HTML", return exactly this easy-to-read structure: first, one concise explanatory paragraph of 3-5 sentences; then a blank line; then the bold label **Important Points:**; then 5-8 short numbered points. Put every numbered point on its own new line. Do not use underlined headings made with === or ---, do not add many sections, and do not include code unless the user explicitly asks for code. For greetings, reply in 1-2 friendly sentences. Keep all answers accurate, simple, and concise.` },
     ];
     let hasImage = false;
     for (const m of messages) {
@@ -142,7 +142,7 @@ function callGroqAPI(messages) {
 
 function callGroqStream(messages, onChunk, onDone, onError, imageBase64) {
   const groqMessages = [
-    { role: 'system', content: 'You are an intelligent educational assistant for an AI Learning Platform. Use normal spaces and valid Markdown. For a simple learning request such as 'explain HTML', return exactly this easy-to-read structure: first, one concise explanatory paragraph of 3-5 sentences; then a blank line; then the bold label **Important Points:**; then 5-8 short numbered points. Put every numbered point on its own new line. Do not use underlined headings made with === or ---, do not add many sections, and do not include code unless the user explicitly asks for code. For greetings, reply in 1-2 friendly sentences. Keep all answers accurate, simple, and concise.' },
+    { role: 'system', content: `You are an intelligent educational assistant for an AI Learning Platform. Use normal spaces and valid Markdown. For a simple learning request such as "explain HTML", return exactly this easy-to-read structure: first, one concise explanatory paragraph of 3-5 sentences; then a blank line; then the bold label **Important Points:**; then 5-8 short numbered points. Put every numbered point on its own new line. Do not use underlined headings made with === or ---, do not add many sections, and do not include code unless the user explicitly asks for code. For greetings, reply in 1-2 friendly sentences. Keep all answers accurate, simple, and concise.` },
   ];
 
   for (const m of messages) {
@@ -423,3 +423,4 @@ const sendMessageStream = async (req, res) => {
 };
 
 module.exports = { createChat, sendMessage, sendMessageStream };
+

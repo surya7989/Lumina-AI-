@@ -21,6 +21,11 @@ import {
   File,
   X,
   Loader2,
+  Mic,
+  Play,
+  Pause,
+  RotateCcw,
+  Download,
 } from 'lucide-react';
 import StudentLayout from '../../components/layout/StudentLayout';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -299,10 +304,11 @@ function ChatItem({ chat, active, onSelect, onRename, onDelete }) {
   );
 }
 
+
 function UploadMenu({ onSelect, onClose, textareaRef }) {
   const items = [
     { type: 'image', icon: Image, label: 'Image', accept: 'image/*' },
-    { type: 'video', icon: Video, label: 'Video', accept: 'video/*,audio/*' },
+    { type: 'video', icon: Video, label: 'Upload Video', accept: 'video/*,audio/*' },
     { type: 'document', icon: FileText, label: 'Document', accept: '.txt,.md,.csv,.json,.js,.py,.html,.css,.pdf' },
   ];
 
@@ -331,10 +337,10 @@ function UploadMenu({ onSelect, onClose, textareaRef }) {
       exit={{ opacity: 0, y: 10, scale: 0.95 }}
       className="absolute bottom-full left-0 mb-2 bg-gray-800 border border-white/10 rounded-xl p-2 shadow-xl z-50"
     >
-      {items.map(({ type, icon: Icon, label, accept }) => (
+      {items.map(({ type, icon: Icon, label, accept, action }) => (
         <button
           key={type}
-          onClick={() => triggerFilePick(type, accept)}
+          onClick={() => { triggerFilePick(type, accept); }}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
         >
           <Icon className="w-4 h-4 text-white" />
@@ -546,14 +552,28 @@ export default function StudentAiChat() {
           const uploadRes = await fetch(`${AI_PROXY_URL}/video/analyze`, {
             method: 'POST', body: formData,
           });
+          
+          if (!uploadRes.ok) {
+            throw new Error(`Video processing failed: ${uploadRes.statusText}`);
+          }
+
           const uploadJson = await uploadRes.json();
-          const transcriptText = uploadJson.success
-            ? `\n\n[Video/Audio transcript from "${attachedFile.name}"]:\n${uploadJson.data.transcript}\n\n[Analysis]:\n${uploadJson.data.analysis}`
-            : `\n\n[Failed to transcribe "${attachedFile.name}"]`;
-          messageContent = messageContent ? `${messageContent}\n\n${transcriptText}` : `Please analyze this:${transcriptText}`;
+          
+          if (uploadJson.success && uploadJson.data) {
+            const { transcript, analysis } = uploadJson.data;
+            const transcriptText = transcript
+              ? `\n\n📝 **Transcript:**\n${transcript}\n\n📊 **Analysis:**\n${analysis}`
+              : '\n\n[Could not extract speech from video]';
+            messageContent = messageContent ? `${messageContent}${transcriptText}` : `Please analyze this video:\n\n**File:** "${attachedFile.name}"${transcriptText}`;
+          } else {
+            const errorMsg = uploadJson.error || 'Could not process video';
+            messageContent = messageContent ? `${messageContent}\n\n⚠️ Error: ${errorMsg}` : `⚠️ Failed to process "${attachedFile.name}": ${errorMsg}`;
+          }
+          
           setMessages((prev) => prev.filter(m => m.id !== progressMsg.id));
-        } catch {
-          messageContent = messageContent ? `${messageContent}\n\n[Failed to process "${attachedFile.name}"]` : `[Failed to process "${attachedFile.name}"]`;
+        } catch (err) {
+          const errorMsg = err.message || 'Unknown error occurred';
+          messageContent = messageContent ? `${messageContent}\n\n⚠️ Error: ${errorMsg}` : `⚠️ Failed to process "${attachedFile.name}": ${errorMsg}`;
           setMessages((prev) => prev.filter(m => m.id !== progressMsg.id));
         }
       } else if (attachedFile.type === 'image') {
@@ -569,14 +589,28 @@ export default function StudentAiChat() {
           const docRes = await fetch(`${AI_PROXY_URL}/document/analyze`, {
             method: 'POST', body: formData,
           });
+
+          if (!docRes.ok) {
+            throw new Error(`Document processing failed: ${docRes.statusText}`);
+          }
+
           const docJson = await docRes.json();
-          const docText = docJson.success
-            ? `\n\n[Document analysis from "${attachedFile.name}"]:\n${docJson.data.analysis}`
-            : `\n\n[Failed to process document "${attachedFile.name}"]`;
-          messageContent = messageContent ? `${messageContent}\n\n${docText}` : `Please analyze this:${docText}`;
+          
+          if (docJson.success && docJson.data) {
+            const { analysis } = docJson.data;
+            const docText = analysis
+              ? `\n\n📄 **Document Analysis:**\n${analysis}`
+              : '\n\n[Could not analyze document]';
+            messageContent = messageContent ? `${messageContent}${docText}` : `Please analyze this document:\n\n**File:** "${attachedFile.name}"${docText}`;
+          } else {
+            const errorMsg = docJson.error || 'Could not process document';
+            messageContent = messageContent ? `${messageContent}\n\n⚠️ Error: ${errorMsg}` : `⚠️ Failed to process "${attachedFile.name}": ${errorMsg}`;
+          }
+          
           setMessages((prev) => prev.filter(m => m.id !== progressMsg.id));
-        } catch {
-          messageContent = messageContent ? `${messageContent}\n\n[Failed to process "${attachedFile.name}"]` : `[Failed to process "${attachedFile.name}"]`;
+        } catch (err) {
+          const errorMsg = err.message || 'Unknown error occurred';
+          messageContent = messageContent ? `${messageContent}\n\n⚠️ Error: ${errorMsg}` : `⚠️ Failed to process "${attachedFile.name}": ${errorMsg}`;
           setMessages((prev) => prev.filter(m => m.id !== progressMsg.id));
         }
       } else {
