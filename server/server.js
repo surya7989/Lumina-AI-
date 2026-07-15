@@ -21,6 +21,7 @@ const videoRoutes = require('./routes/video');
 const quizRoutes = require('./routes/quiz');
 const dbRoutes = require('./routes/db');
 const documentRoutes = require('./routes/document');
+const debugRoutes = require('./routes/debug');
 
 // Mount with and without /api prefix for compatibility with client proxy and direct calls
 app.use('/api/chat', chatRoutes);
@@ -28,6 +29,9 @@ app.use('/chat', chatRoutes);
 
 app.use('/api/video', videoRoutes);
 app.use('/video', videoRoutes);
+
+// Debug endpoint (exposes only presence of envs; does NOT reveal keys)
+app.use('/api/debug', debugRoutes);
 
 app.use('/api/quiz', quizRoutes);
 app.use('/quiz', quizRoutes);
