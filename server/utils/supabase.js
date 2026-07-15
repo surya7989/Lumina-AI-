@@ -1,4 +1,4 @@
-const https = require('https');
+﻿const https = require('https');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -14,7 +14,7 @@ function supabaseRequest(method, path, body) {
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_SERVICE_ROLE_KEY,
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'Authorization': 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
         'Prefer': 'return=representation',
         ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {}),
       },
