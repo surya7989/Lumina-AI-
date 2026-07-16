@@ -12,8 +12,19 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://localhost:5175',
   'http://localhost:5176',
-].filter(Boolean);
-app.use(cors({ origin: (origin, cb) => cb(null, !origin || allowedOrigins.includes(origin)), credentials: true }));
+].filter(Boolean).map(o => o.replace(/\/$/, ''));
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    const cleaned = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(cleaned)) return cb(null, true);
+    // Allow any onrender.com subdomain (production)
+    if (origin.endsWith('.onrender.com')) return cb(null, true);
+    console.warn('CORS blocked origin:', origin);
+    return cb(null, false);
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '50mb' }));
 
 const chatRoutes = require('./routes/chat');
